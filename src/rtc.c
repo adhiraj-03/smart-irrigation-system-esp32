@@ -1,9 +1,14 @@
 
 #include "rtc.h"
 
-void rtc_init(){
+struct tm time_info;
 
-  esp_err_t err;
+bool ready = false;
+
+static esp_err_t err;
+
+void rtc_module_init(){
+
   wifi_init_config_t wifi_init_config = WIFI_INIT_CONFIG_DEFAULT();
   wifi_config_t wifi_config = {
     .sta = {
@@ -12,7 +17,8 @@ void rtc_init(){
     }
   };
 
-  
+  esp_sntp_config_t sntp_config = ESP_NETIF_SNTP_DEFAULT_CONFIG("pool.ntp.org");
+  sntp_config.start = true;
 
   err = nvs_flash_init();                                                       // Initialize the NVS (Wifi needs it)
   printf("nvs_flash_init: %s\n", esp_err_to_name(err));
@@ -24,11 +30,14 @@ void rtc_init(){
   printf("esp_event_loop_create_default: %s\n", esp_err_to_name(err));
   esp_netif_create_default_wifi_sta();                                          // Create WiFi interface
 
-  err = esp_wifi_init(&wifi_init_config);                                                 // Initialising WiFi Driver
+  err = esp_wifi_init(&wifi_init_config);                                       // Initialising WiFi Driver
   printf("esp_wifi_init: %s\n", esp_err_to_name(err));
+
+  esp_netif_sntp_init(&sntp_config);                                            // Initialize SNTP
+
   err = esp_wifi_set_mode(WIFI_MODE_STA);                                       // Set WiFi Mode to Station
   printf("esp_wifi_set_mode: %s\n", esp_err_to_name(err));
-  err = esp_wifi_set_config(WIFI_IF_STA, &wifi_config);                                // Set WiFi Configurations for Connection
+  err = esp_wifi_set_config(WIFI_IF_STA, &wifi_config);                         // Set WiFi Configurations for Connection
   printf("esp_wifi_set_config: %s\n", esp_err_to_name(err));
   err = esp_wifi_start();                                                       // Start WiFi according to current configuration
   printf("esp_wifi_start: %s\n", esp_err_to_name(err));
@@ -49,31 +58,47 @@ void rtc_init(){
 /*
 Event Handler for WiFi to run SNTP on getting IP Address
 */
-static void wifi_event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data){
-  esp_sntp_config_t sntp_config = ESP_NETIF_SNTP_DEFAULT_CONFIG("pool.ntp.org");
-  sntp_config.start = true;
+void wifi_event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data){
 
   if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP){
     printf("WiFi Connected! \n");
     
     // SNTP Code
-    esp_netif_sntp_init(&sntp_config);
     if (esp_netif_sntp_sync_wait(pdMS_TO_TICKS(10000)) != ESP_OK){
       printf("Failed to update system time within 10s timeout");
       return;
     }
-
-    time_t now;
-    time(&now);
-
-    setenv("TZ", "IST-5:30", 1);
-    tzset();
-
-    localtime_r(&now, &time_info);
-
-    printf("Local Time: %02d:%02d:%02d\n",
-          time_info.tm_hour,
-          time_info.tm_min,
-          time_info.tm_sec);
+  ready = true;
   }
 }
+
+int get_current_time(int current_time){
+      time_t now;
+      time(&now);
+
+      setenv("TZ", "IST-5:30", 1);
+      tzset();
+
+      localtime_r(&now, &time_info);
+
+      if (current_time == 0){
+        return time_info.tm_hour;
+      }
+      else if (current_time == 1){
+        return time_info.tm_min;
+      }
+      else if (current_time == 2){
+        return time_info.tm_sec;
+      }
+      else{
+        printf("ERROR: Wrong Parameter Passed to get_current_time() Function.");
+        return 0;
+      }
+
+      // printf("Local Time: %02d:%02d:%02d\n",
+      //     time_info.tm_hour,
+      //     time_info.tm_min,
+      //     time_info.tm_sec);
+
+    
+    }
