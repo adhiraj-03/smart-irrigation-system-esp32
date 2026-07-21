@@ -1,6 +1,8 @@
 #include "rtc.h"
 #include "moisture_sensor.h"
+#include "pump_control.h"
 
+int soil_moisture_level = 0;
 
 void app_main(){
   rtc_module_init();
@@ -9,11 +11,21 @@ void app_main(){
   while (ready != true){
     vTaskDelay(pdMS_TO_TICKS(100));
   }
-  while (1){
-    if (get_current_time(HOUR) == 5 && get_current_time(MIN) == 23){
 
-        moisture_sensor_read();
+  /*------------ PUMP CONTROL LOGIC --------------*/
+  while (get_current_time(HOUR) == 5 && get_current_time(MIN) == 23){
+    soil_moisture_level = moisture_sensor_read();
+    if (soil_moisture_level > 1800 && get_pump_state() == LOW){
+      // Turn the Pump ON
+      pump_on();
     }
+    else if(soil_moisture_level < 1200 && get_pump_state() == HIGH){
+      // Turn the Pump OFF
+      pump_off();
+    }
+    else {continue;}
+    vTaskDelay(pdMS_TO_TICKS(2000));
+  }
     // printf("HOUR: %d      MIN: %d\n", get_current_time(HOUR), get_current_time(MIN));
 
     // printf("Local Time: %02d:%02d:%02d\n",
@@ -23,4 +35,3 @@ void app_main(){
     // vTaskDelay(pdMS_TO_TICKS(1000));
   }
   
-}

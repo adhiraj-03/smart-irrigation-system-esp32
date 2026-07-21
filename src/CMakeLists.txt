@@ -6,10 +6,11 @@ idf_component_register(
         "main.c"
         "rtc.c"
         "moisture_sensor.c"
+        "pump_control.c"
 
     INCLUDE_DIRS "."
     REQUIRES
-        esp_driver_gpio
+            esp_driver_gpio
             nvs_flash
             esp_wifi
             esp_event

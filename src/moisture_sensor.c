@@ -15,6 +15,8 @@ adc_oneshot_chan_cfg_t adc_channel = {
 };
 
 int adc_raw_value;
+int avg_adc_value = 0;
+
 
 void moisture_sensor_init()                                                                   // Initialization of ADC
 {
@@ -26,15 +28,16 @@ void moisture_sensor_init()                                                     
   printf("adc_oneshot_config_channel: %s\n", esp_err_to_name(err));
 }
 
-void moisture_sensor_read(){                                                                  // Reading ADC Value
+int moisture_sensor_read(){                                                                  // Reading ADC Value
   int sum = 0;
-  int avg = 0;
   for(int i = 0; i<SAMPLE_SIZE; i++){
-    adc_oneshot_read(adc_handle, ADC_CHANNEL_6, &adc_raw_value);                          // Get one ADC conversion raw result.
+    adc_oneshot_read(adc_handle, ADC_CHANNEL_6, &adc_raw_value);                              // Get one ADC conversion raw result.
     sum += adc_raw_value;
     
   }
-  avg = sum / SAMPLE_SIZE;
+  avg_adc_value = sum / SAMPLE_SIZE;                                                          // Final Moisture reading stored in avg_adc_value
   
-  printf("ADC Average Moisture Reading: %d\n", avg);
+  printf("ADC Average Moisture Reading: %d\n", avg_adc_value);
+
+  return avg_adc_value;
 }
