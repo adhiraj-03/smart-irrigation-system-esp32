@@ -11,30 +11,36 @@ void app_main(){
   }
 
   moisture_sensor_init();
-  while (ready != true){
-    vTaskDelay(pdMS_TO_TICKS(100));
-  }
 
   /*------------ PUMP CONTROL LOGIC --------------*/
-  while (get_current_time(HOUR) == 5 && get_current_time(MIN) == 23){
+  while ((get_current_time(HOUR) == 6 && get_current_time(MIN) <= 5) || (get_current_time(HOUR) == 8 && get_current_time(MIN) <= 5) || (get_current_time(HOUR) == 10 && get_current_time(MIN) <= 5) || (get_current_time(HOUR) == 12 && get_current_time(MIN) <= 5)){
     soil_moisture_level = moisture_sensor_read();
-    if (soil_moisture_level > 1800 && get_pump_state() == LOW){
+    if (soil_moisture_level > MOIST_THRES_UPPER && get_pump_state() == LOW){
       // Turn the Pump ON
       pump_on();
     }
-    else if(soil_moisture_level < 1200 && get_pump_state() == HIGH){
+    else if(soil_moisture_level < MOIST_THRES_LOWER && get_pump_state() == HIGH){
       // Turn the Pump OFF
       pump_off();
     }
     else {continue;}
     vTaskDelay(pdMS_TO_TICKS(2000));
   }
-    // printf("HOUR: %d      MIN: %d\n", get_current_time(HOUR), get_current_time(MIN));
 
-    // printf("Local Time: %02d:%02d:%02d\n",
-    //       time_info.tm_hour,
-    //       time_info.tm_min,
-    //       time_info.tm_sec);
-    // vTaskDelay(pdMS_TO_TICKS(1000));
+  /*----- Time Synchronisation to reduce drift -----*/
+  if(get_current_time(HOUR) == 6){
+    rtc_module_init();
+  }
+
+  printf("Local Time: %02d:%02d:%02d\n",
+        time_info.tm_hour,
+        time_info.tm_min,
+        time_info.tm_sec);
+  vTaskDelay(pdMS_TO_TICKS(1000));
+
+  printf("BEFORE DEEP SLEEP START\n");
+  sleep_enable();
+  printf("AFTER DEEP SLEEP");                                     // Never Executes due to system reboot after Deep Sleep
+
   }
   

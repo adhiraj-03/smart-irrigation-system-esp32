@@ -48,10 +48,18 @@ void rtc_module_init(){
   err = esp_wifi_connect();                                                     // Connect to Wifi
   printf("esp_wifi_connect: %s\n", esp_err_to_name(err));
 
+  while (ready != true){                                                        // Wait until SNTP syncs before taking any other action
+    vTaskDelay(pdMS_TO_TICKS(100));
+  }
 
+  err = esp_wifi_disconnect();                                                  // Disconnect the WiFi
+  printf("esp_wifi_disconnect: %s\n", esp_err_to_name(err));
 
-  // err = esp_wifi_disconnect();
-  // printf("esp_wifi_disconnect: %s\n", esp_err_to_name(err));
+  err = esp_wifi_stop();                                                        // Turn off WiFi Radio and Stop WiFi Driver
+  printf("esp_wifi_stop: %s\n", esp_err_to_name(err));
+
+  err = esp_wifi_deinit();                                                      // Release Driver's resources from memory
+  printf("esp_wifi_deinit: %s\n", esp_err_to_name(err));
 
 }
 
@@ -72,7 +80,7 @@ void wifi_event_handler(void *arg, esp_event_base_t event_base, int32_t event_id
   }
 }
 
-int get_current_time(int current_time){
+int get_current_time(int current_time){                                          // Get the Current System Time
       time_t now;
       time(&now);
 

@@ -28,7 +28,7 @@ void moisture_sensor_init()                                                     
   printf("adc_oneshot_config_channel: %s\n", esp_err_to_name(err));
 }
 
-int moisture_sensor_read(){                                                                  // Reading ADC Value
+int moisture_sensor_read(){                                                                   // Reading ADC Value
   int sum = 0;
   for(int i = 0; i<SAMPLE_SIZE; i++){
     adc_oneshot_read(adc_handle, ADC_CHANNEL_6, &adc_raw_value);                              // Get one ADC conversion raw result.
