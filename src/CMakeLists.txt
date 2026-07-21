@@ -7,6 +7,7 @@ idf_component_register(
         "rtc.c"
         "moisture_sensor.c"
         "pump_control.c"
+        "sleep.c"
 
     INCLUDE_DIRS "."
     REQUIRES

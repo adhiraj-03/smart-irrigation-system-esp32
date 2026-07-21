@@ -1,11 +1,14 @@
 #include "rtc.h"
 #include "moisture_sensor.h"
 #include "pump_control.h"
+#include "sleep.h"
 
 int soil_moisture_level = 0;
 
 void app_main(){
-  rtc_module_init();
+  if (esp_sleep_get_wakeup_cause() == ESP_SLEEP_WAKEUP_UNDEFINED){
+    rtc_module_init();
+  }
 
   moisture_sensor_init();
   while (ready != true){
